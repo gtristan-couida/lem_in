@@ -4,6 +4,7 @@ void	error_management(t_lem0 *st, char *str)
 {
 	t_lem1	*room;
 	t_links	*link;
+	t_list	*list;
 	int i;
 
 	ft_putstr_fd(str, 2);
@@ -24,6 +25,13 @@ void	error_management(t_lem0 *st, char *str)
 			free(room);
 		}
 	}
+	while (st->head_print)
+	{
+		list = st->head_print;
+		st->head_print = st->head_print->next;
+		free(list->content);
+		free(list);
+	}
 	free(st);
 	exit(0);
 }
@@ -32,7 +40,8 @@ void	free_arr(char **arr, int i)
 {
 	while (i >= 0)
 	{
-		free(arr[i]);
+		if (arr[i])
+			free(arr[i]);
 		i--;
 	}
 	free(arr);
@@ -66,7 +75,7 @@ t_lem1	*new_lem1(char *name, t_lem1 *prev, t_lem1 *next)
 
 void	instructions(t_lem0 *st0, char *line, int launch)
 {
-	if (!ft_strcmp(line, "start"))
+	if (!ft_strcmp(line, "##start"))
 	{
 		if (st0->tmp_info)
 			error_management(st0, "ERROR: multiple instructions for one room");
@@ -74,7 +83,7 @@ void	instructions(t_lem0 *st0, char *line, int launch)
 			error_management(st0, "ERROR: room specification before defining number of ants");
 		st0->tmp_info = START;
 	}
-	else if (!ft_strcmp(line, "end"))
+	else if (!ft_strcmp(line, "##end"))
 	{
 		if (st0->tmp_info)
 			error_management(st0, "ERROR: multiple instructions for one room");
@@ -86,6 +95,8 @@ void	instructions(t_lem0 *st0, char *line, int launch)
 		return ;
 	if ((st0->start && st0->tmp_info == START) || (st0->end && st0->tmp_info == END))
 		error_management(st0, "ERROR: multiple start or end rooms");
+	st0->print->next = ft_lstnew(line, ft_strlen(line));
+	st0->print = st0->print->next;
 }
 
 int		check_ants(t_lem0 *st0, char *line, int i)
@@ -97,12 +108,14 @@ int		check_ants(t_lem0 *st0, char *line, int i)
 		error_management(st0, "ERROR: no or empty line\n");
 	if (*line == '#' && *(line + 1) == '#')
 	{
-		instructions(st0, line + 2, 0);
+		instructions(st0, line, 0);
 		return (0);
 	}
 	st0->ants = atoi_lem(line, st0);
 	if (j < 0 || st0->ants < 0)
 		error_management(st0, "ERROR: wrong number of ants\n");
+	st0->print = ft_lstnew(line, ft_strlen(line));
+	st0->head_print = st0->print;
 	return (1);
 }
 
@@ -146,11 +159,7 @@ int		hash_func(char *str)
 int 	check_rooms2(t_lem0 *st0, char *line, int i)
 {
 	char	**arr;
-	int		j;
-	int 	k;
 
-	j = 0;
-	k = 0;
 	if (!(arr = split(line, ' ')))
 		error_management(st0, "ERROR: wrong file contents or memory wasn't allocated");
 	while (arr[i])
@@ -181,10 +190,8 @@ int 	check_rooms2(t_lem0 *st0, char *line, int i)
 	st0->tmp_info = 0;
 	st0->lem1[i]->position[0] = atoi_lem(arr[1], st0);
 	st0->lem1[i]->position[1] = atoi_lem(arr[2], st0);
-	free(arr[1]);
-	free(arr[2]);
-	if (j < 0 || k < 0)
-		error_management(st0, "ERROR: wrong coordinates\n");
+	arr[0] = NULL;
+	free_arr(arr, i);
 	return (0);
 }
 

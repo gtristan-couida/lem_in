@@ -13,6 +13,7 @@ struct s_lem1;
 typedef struct		s_links
 {
 	int				weight;
+	int				flag;
 	struct s_links	*next;
 	struct s_links	*prev;
 	struct s_lem1	*connection_room;
