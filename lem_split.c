@@ -24,7 +24,7 @@ static int 	word_len(char *line, char c)
 	return (i);
 }
 
-char	**split(char *line, char c)
+char		**split(char *line, char c)
 {
 	int i;
 	int j;

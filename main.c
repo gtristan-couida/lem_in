@@ -40,11 +40,12 @@ void	free_arr(char **arr, int i)
 {
 	while (i >= 0)
 	{
-		if (arr[i])
-			free(arr[i]);
+		free(arr[i]);
+		arr[i] = NULL;
 		i--;
 	}
 	free(arr);
+	arr = NULL;
 }
 
 t_links *new_link(t_links *prev, t_links *next, t_lem1 *connect)
@@ -95,7 +96,7 @@ void	instructions(t_lem0 *st0, char *line, int launch)
 		return ;
 	if ((st0->start && st0->tmp_info == START) || (st0->end && st0->tmp_info == END))
 		error_management(st0, "ERROR: multiple start or end rooms");
-	st0->print->next = ft_lstnew(line, ft_strlen(line));
+	st0->print->next = ft_lstnew(line, ft_strlen(line) + 1);
 	st0->print = st0->print->next;
 }
 
@@ -156,22 +157,23 @@ int		hash_func(char *str)
 	return (i);
 }
 
-int 	check_rooms2(t_lem0 *st0, char *line, int i)
+int 	check_rooms2(t_lem0 *st0, char *line, int j)
 {
 	char	**arr;
+	int i;
 
 	if (!(arr = split(line, ' ')))
 		error_management(st0, "ERROR: wrong file contents or memory wasn't allocated");
-	while (arr[i])
-		i++;
-	if (i != 3)
+	while (arr[j])
+		j++;
+	if (j != 3)
 	{
-		free_arr(arr, i);
+		free_arr(arr, j);
 		return (1);
 	}
 	if (!*arr[0] || check_coord(arr[1], arr[2]))
 	{
-		free_arr(arr, i);
+		free_arr(arr, j);
 		error_management(st0, "ERROR: wrong room name or coordinates\n");
 	}
 	i = hash_func(arr[0]);
@@ -191,7 +193,9 @@ int 	check_rooms2(t_lem0 *st0, char *line, int i)
 	st0->lem1[i]->position[0] = atoi_lem(arr[1], st0);
 	st0->lem1[i]->position[1] = atoi_lem(arr[2], st0);
 	arr[0] = NULL;
-	free_arr(arr, i);
+	free_arr(arr, j);
+	st0->print->next = ft_lstnew(line, ft_strlen(line) + 1);
+	st0->print = st0->print->next;
 	return (0);
 }
 
@@ -200,7 +204,7 @@ int 	check_rooms1(t_lem0 *st0, char *line)
 	if (!line || !*line || *line == 'L')
 		error_management(st0, "ERROR\n");
 	if (*line == '#' && *(line + 1) == '#')
-		instructions(st0, line + 2, 1);
+		instructions(st0, line, 1);
 	else if (*line == '#')
 		return (0);
 	else
@@ -261,21 +265,38 @@ void	check_links(t_lem0 *st0, char *line, int i)
 		if (!tmp1->links || !tmp2->links)
 			error_management(st0, "ERROR: memory wasn't allocated\n");
 	}
+	st0->print->next = ft_lstnew(line, ft_strlen(line) + 1);
+	st0->print = st0->print->next;
+}
 
+void	print_subject(t_lem0 *st0)
+{
+	while (st0->head_print)
+	{
+		st0->print = st0->head_print;
+		ft_putstr(st0->head_print->content);
+		ft_putchar('\n');
+		st0->head_print = st0->head_print->next;
+		free(st0->print->content);
+		st0->print->content = NULL;
+		free(st0->print);
+		st0->print = NULL;
+	}
+	ft_putchar('\n');
 }
 
 void	parsing(char *av, int i, int j)
 {
-	int		fd;
+	int		fd;															//remove
 	int		gnl;
 	char	*line;
 	t_lem0	*st0;
 
 	if (!(st0 = ft_memalloc(sizeof(t_lem0))))
 		error_management(st0, "ERROR: memory wasn't allocated\n");
-	if (!(fd = open(av, O_RDONLY)))
-		error_management(st0, "ERROR: can't open the file\n");
-	while ((gnl = get_next_line(fd, &line)))
+	if (!(fd = open(av, O_RDONLY)))										//remove
+		error_management(st0, "ERROR: can't open the file\n");		//remove
+	while ((gnl = get_next_line(fd, &line)))							//change fd to 0
 	{
 		if (gnl == -1)
 			error_management(st0, "ERROR: can't read from the file\n");
@@ -287,14 +308,15 @@ void	parsing(char *av, int i, int j)
 			check_links(st0, line, 0);
 		free(line);
 	}
+	print_subject(st0);
 //	processing(st0);
 }
 
 int	main(int ac, char **av)
 {
 	errno = 0;
-	if (ac < 2)
-		ft_putstr_fd("ERROR\n", 2);
-	parsing(av[1], 0, 0);
+	if (ac < 2)									//change
+		ft_putstr_fd("ERROR\n", 2);		//change
+	parsing(av[1], 0, 0);				//change
 	return 0;
 }
